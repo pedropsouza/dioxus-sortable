@@ -1,6 +1,6 @@
 [package]
 name = "dioxus-sortable"
-version = "0.1.2"
+version = "0.1.3"
 authors = [ "Joshua McQuistan <joshua.mcquistan@feral.io>" ]
 edition = "2021"
 description = "Sortable tables and components for Dioxus"
@@ -11,7 +11,7 @@ keywords = [ "dioxus", "ui", "gui", "wasm" ]
 categories = [ "wasm", "gui", "web-programming" ]
 
 [dependencies]
-dioxus = "0.4"
+dioxus = "0.6"
 wasm-bindgen = "0.2.87"
 
 [dev-dependencies]

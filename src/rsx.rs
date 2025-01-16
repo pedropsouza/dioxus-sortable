@@ -3,33 +3,33 @@ use crate::{Direction, SortBy, Sortable, UseSorter};
 use dioxus::prelude::*;
 
 /// See [`Th`].
-#[derive(Props)]
-pub struct ThProps<'a, F: 'static> {
-    sorter: UseSorter<'a, F>,
+#[derive(Props, Clone, PartialEq)]
+pub struct ThProps<F: 'static + PartialEq> {
+    sorter: UseSorter<F>,
     field: F,
-    children: Element<'a>,
+    children: Element,
 }
 
 /// Convenience helper. Builds a `<th>` element with a click handler that calls [`UseSorter::toggle_field`]. Renders the current state using [`ThStatus`].
-pub fn Th<'a, F: Copy + Sortable>(cx: Scope<'a, ThProps<'a, F>>) -> Element<'a> {
-    let sorter = cx.props.sorter;
-    let field = cx.props.field;
-    cx.render(rsx! {
+pub fn Th<F: Copy + Sortable>(props: ThProps<F>) -> Element {
+    let mut sorter = props.sorter;
+    let field = props.field;
+    rsx! {
         th {
             onclick: move |_| sorter.toggle_field(field),
-            &cx.props.children
+            { props.children }
             ThStatus {
                 sorter: sorter,
                 field: field,
             }
         }
-    })
+    }
 }
 
 /// See [`ThStatus`].
-#[derive(PartialEq, Props)]
-pub struct ThStatusProps<'a, F: 'static> {
-    sorter: UseSorter<'a, F>,
+#[derive(PartialEq, Props, Clone)]
+pub struct ThStatusProps<F: 'static + PartialEq> {
+    sorter: UseSorter<F>,
     field: F,
 }
 
@@ -39,13 +39,13 @@ pub struct ThStatusProps<'a, F: 'static> {
 ///  - If the field is sortable in both directions then render an arrow pointing in the active direction, or a double-headed arrow if the field is inactive.
 ///
 /// Active fields will be shown in bold (i.e., the current field being sorted by). Inactive fields will be greyed out.
-pub fn ThStatus<'a, F: Copy + Sortable>(cx: Scope<'a, ThStatusProps<'a, F>>) -> Element<'a> {
-    let sorter = &cx.props.sorter;
-    let field = cx.props.field;
+pub fn ThStatus<F: 'static + Sortable + Clone>(props: ThStatusProps<F>) -> Element {
+    let sorter = props.sorter;
+    let field = props.field;
     let (active_field, active_dir) = sorter.get_state();
-    let active = *active_field == field;
+    let active = active_field == field;
 
-    cx.render(match field.sort_by() {
+    match field.sort_by() {
         None => rsx!(""),
         Some(sort_by) => {
             use Direction::*;
@@ -65,25 +65,25 @@ pub fn ThStatus<'a, F: Copy + Sortable>(cx: Scope<'a, ThStatusProps<'a, F>>) -> 
                 }),
             }
         }
-    })
+    }
 }
 
 /// See [`ThSpan`].
-#[derive(Props)]
-struct ThSpan<'a> {
+#[derive(Props, Clone, PartialEq)]
+struct ThSpan {
     active: bool,
-    children: Element<'a>,
+    children: Element,
 }
 
 /// Convenience helper. Renders an active or inactive gielement.
-fn ThSpan<'a>(cx: Scope<'a, ThSpan<'a>>) -> Element<'a> {
-    let colour = if cx.props.active { "#555" } else { "#ccc" };
+fn ThSpan(props: ThSpan) -> Element {
+    let colour = if props.active { "#555" } else { "#ccc" };
     let nbsp = "&nbsp;";
-    cx.render(rsx! {
+    rsx! {
         span {
             style: "color: {colour};",
             span { dangerous_inner_html: "{nbsp}", }
-            &cx.props.children
+            { props.children }
         }
-    })
+    }
 }
