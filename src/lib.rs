@@ -65,17 +65,17 @@
 //!     }
 //! }
 //!
-//! #[inline_props]
-//! fn OurMinimalExampleTable(cx: Scope) -> Element {
+//! #[component]
+//! fn OurMinimalExampleTable() -> Element {
 //!     // Set up Dioxus state hooks. *Must* be called every time in the same order
-//!     let sorter = use_sorter::<PersonField>(cx);
+//!     let sorter = use_sorter::<PersonField>();
 //!     // Obtain our data. Either passed via props or pulled from a server
 //!     let mut data = load_data();
 //!     // Sort our data. This is optional but needed to apply the sort
 //!     sorter.sort(data.as_mut_slice());
 //!
 //!     // Render our table like normal.
-//!     cx.render(rsx! {
+//!     rsx! {
 //!         table {
 //!             thead {
 //!                 tr {
@@ -99,7 +99,7 @@
 //!                 }
 //!             }
 //!         }
-//!    })
+//!     }
 //! }
 //!
 //! # fn load_data() -> Vec<Person> {

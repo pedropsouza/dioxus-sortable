@@ -2,17 +2,17 @@ use dioxus::prelude::*;
 use dioxus_sortable::{use_sorter, NullHandling, PartialOrdBy, SortBy, Sortable, Th, ThStatus};
 
 fn main() {
-    wasm_logger::init(wasm_logger::Config::new(log::Level::Info));
-    dioxus_web::launch(app);
+    dioxus::launch(app);
 }
 
-fn app(cx: Scope) -> Element {
+#[component]
+fn app() -> Element {
     // Trigger pulling our data "externally"
-    let future = use_future(cx, (), |_| load_prime_ministers());
+    let resource = use_resource(load_prime_ministers);
 
-    cx.render(rsx! {
+    rsx! {
         h1 { "Birthplaces of British prime ministers" }
-        future.value().map_or_else(
+        { resource().map_or_else(
             // Show a loading message while the data is being fetched
             || rsx!{
                 p { "Loading..." }
@@ -21,33 +21,33 @@ fn app(cx: Scope) -> Element {
             |data| rsx!{
                 PrimeMinisters{ data: data.to_vec(), }
             })
-    })
+        }
+    }
 }
 
 /// Creates a sortable table of prime ministers and their birthplaces. Can be filtered by name.
 ///
 /// Each column header can be clicked to sort by that column. The current sort state is displayed in the header.
 #[allow(non_snake_case)]
-#[inline_props]
-fn PrimeMinisters(cx: Scope, data: Vec<Person>) -> Element {
+#[component]
+fn PrimeMinisters(data: Vec<Person>) -> Element {
     // Sorter hook must be called unconditionally
-    let sorter = use_sorter::<PersonField>(cx);
-    let name = use_state(cx, || "".to_string());
+    let mut sorter = use_sorter::<PersonField>();
+    let mut name = use_signal(|| "".to_string());
 
     // Filter the data
-    let mut data = data
-        .to_owned()
-        .into_iter()
-        .filter(|row| row.name.to_lowercase().contains(&name.get().to_lowercase()))
+    let mut data = data.iter()
+        .filter(|row| row.name.to_lowercase().contains(&name.read().to_lowercase()))
+        .cloned()
         .collect::<Vec<_>>();
     // Sort the data. Unlike use_sorter, may be skipped
     sorter.sort(data.as_mut_slice());
 
-    cx.render(rsx! {
+    rsx! {
         // Our simple search box
         input {
             placeholder: "Search by name",
-            oninput: move |evt| name.set(evt.value.clone()),
+            oninput: move |evt| name.set(evt.value().clone()),
         }
 
         // Render a table like we would any other except for the `Th` component
@@ -75,29 +75,31 @@ fn PrimeMinisters(cx: Scope, data: Vec<Person>) -> Element {
             }
             tbody {
                 // Iterate over our Person data like we would any other.
-                data.iter().map(|row| {
-                    rsx! {
-                        tr {
-                            td { "{row.name}" }
-                            td {
-                                match row.left_office {
-                                    None => rsx!(em { "Present" }),
-                                    Some(ref x) => rsx!("{x}"),
+                {
+                    data.iter().map(|row| {
+                        rsx! {
+                            tr {
+                                td { "{row.name}" }
+                                td {
+                                    match row.left_office {
+                                        None => rsx!(em { "Present" }),
+                                        Some(ref x) => rsx!("{x}"),
+                                    }
                                 }
-                            }
-                            td {
-                                match row.birthplace {
-                                    Birthplace::Unknown => rsx!(em { "Unknown" }),
-                                    Birthplace::City(ref city) => rsx!("{city}")
+                                td {
+                                    match row.birthplace {
+                                        Birthplace::Unknown => rsx!(em { "Unknown" }),
+                                        Birthplace::City(ref city) => rsx!("{city}")
+                                    }
                                 }
+                                td { "{row.country}" }
                             }
-                            td { "{row.country}" }
                         }
-                    }
-                })
+                    })
+                }
             }
         }
-    })
+    }
 }
 
 /// Our per-row data type that we want to sort
